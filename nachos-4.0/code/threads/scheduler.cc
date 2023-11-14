@@ -23,6 +23,36 @@
 #include "scheduler.h"
 #include "main.h"
 
+bool sleepScheduler::IsEmpty() {
+    return _waitQueue.size() == 0;
+}
+
+void sleepScheduler::PutToSleep(Thread*t, int x) {
+    ASSERT(kernel->interrupt->getLevel() == IntOff);
+    _waitQueue.push_back(waitThread(t, _current_interrupt + x));
+    t->Sleep(false);
+}
+
+bool sleepScheduler::PutToReady() {
+    bool ready = false;
+    _current_interrupt++;
+    for (std::list<waitThread>::iterator it = _waitQueue.begin(); it != _waitQueue.end(); )
+    {
+        if (_current_interrupt >= it->wakeUpTime)
+        {
+            ready = true;
+            kernel->scheduler->ReadyToRun(it->waiter);
+            it = _waitQueue.erase(it);
+        }
+        else
+        {
+            it++;
+        }
+                
+    }
+    return ready;
+}
+
 //----------------------------------------------------------------------
 // Scheduler::Scheduler
 // 	Initialize the list of ready but not running threads.

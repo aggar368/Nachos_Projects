@@ -11,6 +11,7 @@
 #include "copyright.h"
 #include "alarm.h"
 #include "main.h"
+#include "scheduler.h"
 
 //----------------------------------------------------------------------
 // Alarm::Alarm
@@ -51,8 +52,8 @@ Alarm::CallBack()
 {
     Interrupt *interrupt = kernel->interrupt;
     MachineStatus status = interrupt->getStatus();
-    
-    if (status == IdleMode) {	// is it time to quit?
+    bool ready = _sleepScheduler.PutToReady();
+    if (status == IdleMode && !ready && _sleepScheduler.IsEmpty()) {	// is it time to quit?
         if (!interrupt->AnyFutureInterrupts()) {
 	    timer->Disable();	// turn off the timer
 	}
@@ -61,3 +62,9 @@ Alarm::CallBack()
     }
 }
 
+void Alarm::WaitUntil(int x){
+    IntStatus oldLevel = kernel->interrupt->SetLevel(IntOff);
+    Thread* t = kernel->currentThread;
+    _sleepScheduler.PutToSleep(t, x);
+    kernel->interrupt->SetLevel(oldLevel);
+};

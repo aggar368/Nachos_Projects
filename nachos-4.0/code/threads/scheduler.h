@@ -12,10 +12,30 @@
 #include "copyright.h"
 #include "list.h"
 #include "thread.h"
+#include <list>
 
 // The following class defines the scheduler/dispatcher abstraction -- 
 // the data structures and operations needed to keep track of which 
 // thread is running, and which threads are ready but not running.
+
+class sleepScheduler {
+  public:
+	sleepScheduler():_current_interrupt(0) {};
+	void PutToSleep(Thread *t, int x);
+  bool PutToReady();
+  bool IsEmpty();
+  private:
+	class waitThread {
+		public:
+		  waitThread(Thread* t, int x):
+		    waiter(t), wakeUpTime(x) {};
+		  Thread* waiter;
+		  int wakeUpTime;
+	};
+
+  int _current_interrupt;
+  std::list<waitThread> _waitQueue;
+};
 
 enum SchedulerType {
         RR,     // Round Robin
