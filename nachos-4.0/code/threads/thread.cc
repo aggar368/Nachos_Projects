@@ -218,6 +218,36 @@ Thread::Yield ()
     (void) kernel->interrupt->SetLevel(oldLevel);
 }
 
+// self-testing functions
+void
+threadUpdate() {
+    Thread *t = kernel->currentThread;
+    while (t->getBurstTime() > 0)
+    {
+        t->setBurstTime(t->getBurstTime() - 1);
+        kernel->interrupt->OneTick();
+        cout << kernel->currentThread->getName() << " remaining burst time: " << kernel->currentThread->getBurstTime() << endl;
+    }    
+}
+
+void
+Thread::CPUScheduling() {
+    const int thread_count = 3;
+    char *name[thread_count] = {"A", "B", "C"};
+    int priorities[thread_count] = {1, 2, 3};
+    int burst_times[thread_count] = {10, 7, 5};
+
+    Thread *t;
+    for (int i = 0; i < thread_count; i++)
+    {
+        t = new Thread(name[i]);
+        t->setPriority(priorities[i]);
+        t->setBurstTime(burst_times[i]);
+        t->Fork((VoidFunctionPtr) threadUpdate, (void *)NULL);
+    }
+    kernel->currentThread->Yield();
+}
+
 //----------------------------------------------------------------------
 // Thread::Sleep
 // 	Relinquish the CPU, because the current thread has either

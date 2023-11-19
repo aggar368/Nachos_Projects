@@ -58,13 +58,20 @@ Alarm::CallBack()
 	    timer->Disable();	// turn off the timer
 	}
     } else {			// there's someone to preempt
-	interrupt->YieldOnReturn();
+        if (kernel->scheduler->getType() == RR || kernel->scheduler->getType() == Priority)
+        {
+            cout << "check preempt" << endl;
+            interrupt->YieldOnReturn();
+        }        	
     }
 }
 
 void Alarm::WaitUntil(int x){
     IntStatus oldLevel = kernel->interrupt->SetLevel(IntOff);
     Thread* t = kernel->currentThread;
+    int alreadyworked = kernel->stats->userTicks - t->getStartTime();
+    cout << "already worked for " << alreadyworked << "before Sleep()" << endl;
+    t->setStartTime(kernel->stats->userTicks);
     _sleepScheduler.PutToSleep(t, x);
     kernel->interrupt->SetLevel(oldLevel);
 };

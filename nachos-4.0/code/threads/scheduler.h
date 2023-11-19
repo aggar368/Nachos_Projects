@@ -38,7 +38,8 @@ class sleepScheduler {
 };
 
 enum SchedulerType {
-        RR,     // Round Robin
+        FIFO,
+		RR,     // Round Robin
         SJF,
         Priority
 };
@@ -47,6 +48,7 @@ class Scheduler {
   public:
 	Scheduler();		// Initialize list of ready threads 
 	~Scheduler();				// De-allocate ready list
+	Scheduler(SchedulerType type);
 
 	void ReadyToRun(Thread* thread);	
     					// Thread can be dispatched.
@@ -59,6 +61,7 @@ class Scheduler {
 	void Print();			// Print contents of ready list
     
     // SelfTest for scheduler is implemented in class Thread
+	SchedulerType getType() {return schedulerType;}	
     
   private:
 	SchedulerType schedulerType;

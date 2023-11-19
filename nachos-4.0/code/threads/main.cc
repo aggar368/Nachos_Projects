@@ -19,6 +19,7 @@
 #undef MAIN
 
 #include "main.h"
+#include "scheduler.h"
 
 // global variables
 KernelType *kernel;
@@ -75,8 +76,26 @@ main(int argc, char **argv)
     
     DEBUG(dbgThread, "Entering main");
 
+    SchedulerType type;
+    if (strcmp(argv[1], "FCFS") == 0)
+    {
+        type = FIFO;
+    }
+    else if (strcmp(argv[1], "SJF") == 0)
+    {
+        type = SJF;
+    }
+    else if (strcmp(argv[1], "PRIORITY") == 0)
+    {
+        type = Priority;
+    }
+    else
+    {
+        type = RR;  // default
+    }
+    
     kernel = new KernelType(argc, argv);
-    kernel->Initialize();
+    kernel->Initialize(type);
     
     CallOnUserAbort(Cleanup);		// if user hits ctl-C
 

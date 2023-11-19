@@ -22,6 +22,7 @@
 #include "debug.h"
 #include "scheduler.h"
 #include "main.h"
+#include "list.h"
 
 bool sleepScheduler::IsEmpty() {
     return _waitQueue.size() == 0;
@@ -53,16 +54,66 @@ bool sleepScheduler::PutToReady() {
     return ready;
 }
 
+int SJFSort(Thread *t1, Thread *t2) {
+    if (t1->getBurstTime() == t2->getBurstTime())
+    {
+        return 0;
+    }
+    else if (t1->getBurstTime() > t2->getBurstTime())
+    {
+        return 1;
+    }
+    else
+    {
+        return -1;
+    }        
+}
+int PrioritySort(Thread *t1, Thread *t2) {
+    if (t1->getPriority() == t2->getPriority())
+    {
+        return 0;
+    }
+    else if (t1->getPriority() > t2->getPriority())
+    {
+        return 1;
+    }
+    else
+    {
+        return -1;
+    }
+}
+int FIFOSort(Thread *t1, Thread *t2) {
+    return 1;
+}
+
 //----------------------------------------------------------------------
 // Scheduler::Scheduler
 // 	Initialize the list of ready but not running threads.
 //	Initially, no ready threads.
 //----------------------------------------------------------------------
 
-Scheduler::Scheduler()
+Scheduler::Scheduler() {
+    Scheduler(RR);  // default
+}
+Scheduler::Scheduler(SchedulerType type)
 {
-//	schedulerType = type;
-	readyList = new List<Thread *>; 
+    schedulerType = type;
+    switch (schedulerType)
+    {
+    case RR:
+        readyList = new List<Thread *>;
+        break;
+    case SJF:
+        readyList = new SortedList<Thread *>(SJFSort);
+        break;
+    case Priority:
+        readyList = new SortedList<Thread *>(PrioritySort);
+        break;
+    case FIFO:
+        readyList = new SortedList<Thread *>(FIFOSort);
+        break;
+    }
+	
 	toBeDestroyed = NULL;
 } 
 
