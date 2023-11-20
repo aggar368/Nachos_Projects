@@ -52,13 +52,13 @@ Alarm::CallBack()
 {
     Interrupt *interrupt = kernel->interrupt;
     MachineStatus status = interrupt->getStatus();
-    bool ready = _sleepScheduler.PutToReady();
+    bool ready = _sleepScheduler.PutToReady();    
     if (status == IdleMode && !ready && _sleepScheduler.IsEmpty()) {	// is it time to quit?
         if (!interrupt->AnyFutureInterrupts()) {
 	    timer->Disable();	// turn off the timer
 	}
     } else {			// there's someone to preempt
-        if (kernel->scheduler->getType() == RR || kernel->scheduler->getType() == Priority)
+        if (kernel->scheduler->getType() == RR)
         {
             cout << "check preempt" << endl;
             interrupt->YieldOnReturn();

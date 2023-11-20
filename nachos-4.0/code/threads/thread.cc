@@ -234,7 +234,7 @@ void
 Thread::CPUScheduling() {
     const int thread_count = 3;
     char *name[thread_count] = {"A", "B", "C"};
-    int priorities[thread_count] = {1, 2, 3};
+    int priorities[thread_count] = {2, 3, 1};
     int burst_times[thread_count] = {10, 7, 5};
 
     Thread *t;

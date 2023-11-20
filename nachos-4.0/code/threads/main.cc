@@ -85,7 +85,7 @@ main(int argc, char **argv)
     {
         type = SJF;
     }
-    else if (strcmp(argv[1], "PRIORITY") == 0)
+    else if (strcmp(argv[1], "Priority") == 0)
     {
         type = Priority;
     }
