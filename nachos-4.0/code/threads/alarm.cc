@@ -71,7 +71,7 @@ void Alarm::WaitUntil(int x){
     Thread* t = kernel->currentThread;
     int alreadyworked = kernel->stats->userTicks - t->getStartTime();
     cout << "already worked for " << alreadyworked << "before Sleep()" << endl;
-    t->setStartTime(kernel->stats->userTicks);
+    // t->setStartTime(kernel->stats->userTicks);
     _sleepScheduler.PutToSleep(t, x);
     kernel->interrupt->SetLevel(oldLevel);
 };
