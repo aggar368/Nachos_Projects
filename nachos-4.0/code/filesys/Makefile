@@ -2909,6 +2909,4 @@ pbitmap.o: ../filesys/pbitmap.cc /usr/include/stdc-predef.h \
  ../lib/copyright.h ../filesys/pbitmap.h ../lib/bitmap.h \
  ../lib/copyright.h ../lib/utility.h ../filesys/openfile.h \
  ../lib/utility.h
-# DEPENDENCIES MUST END AT END OF FILE
-# IF YOU PUT STUFF HERE IT WILL GO AWAY
-# see make depend above
+                                                                                                       

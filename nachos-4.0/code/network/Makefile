@@ -3204,6 +3204,4 @@ network.o: ../machine/network.cc /usr/include/stdc-predef.h \
  ../machine/interrupt.h ../machine/stats.h ../threads/alarm.h \
  ../machine/callback.h ../machine/timer.h ../filesys/synchdisk.h \
  ../machine/disk.h ../threads/synch.h ../threads/main.h
-# DEPENDENCIES MUST END AT END OF FILE
-# IF YOU PUT STUFF HERE IT WILL GO AWAY
-# see make depend above
+                                                                                                       
