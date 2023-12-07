@@ -93,7 +93,8 @@ ExceptionHandler(ExceptionType which)
 	case PageFaultException:		
 		{
 			kernel->stats->numPageFaults++;  // record page fault
-			unsigned int vpn = (unsigned) kernel->machine->ReadRegister(BadVAddrReg) / PageSize;  // load the page # failed to find
+			unsigned int vpn;
+			vpn = (unsigned) kernel->machine->ReadRegister(BadVAddrReg) / PageSize;  // load the page # failed to find
 			// see if there is spare physical page
 			unsigned int phy_mem_idx = 0;
 			while (kernel->machine->PhyMemStatus[phy_mem_idx] == true && phy_mem_idx < NumPhysPages)
