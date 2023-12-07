@@ -133,7 +133,7 @@ class Machine {
     unsigned int pageTableSize;
     bool ReadMem(int addr, int size, int* value);
 	bool PhyMemStatus[NumPhysPages] = {false};
-	bool VirMemStatus[2*NumPhysPages] = {false};
+	bool VirMemStatus[NumPhysPages] = {false};
 	TranslationEntry *phys_pages[NumPhysPages];
   private:
 
