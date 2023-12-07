@@ -1503,4 +1503,6 @@ elevator.o: ../machine/elevator.cc /usr/include/stdc-predef.h \
  ../machine/interrupt.h ../machine/stats.h ../threads/alarm.h \
  ../machine/callback.h ../machine/timer.h ../threads/main.h \
  ../threads/kernel.h
-                                                                                                       
+# DEPENDENCIES MUST END AT END OF FILE
+# IF YOU PUT STUFF HERE IT WILL GO AWAY
+# see make depend above
