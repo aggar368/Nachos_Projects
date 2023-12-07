@@ -241,8 +241,7 @@ Machine::Translate(int virtAddr, int* physAddr, int size, bool writing)
 	DEBUG(dbgAddr, "Illegal pageframe " << pageFrame);
 	return BusErrorException;
     }
-    entry->use = TRUE;		// set the use, dirty bits
-	entry->access_times++;  // record the access
+    entry->use = TRUE;		// set the use, dirty bits	
     if (writing)
 		entry->dirty = TRUE;
     *physAddr = pageFrame * PageSize + offset;
