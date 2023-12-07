@@ -43,6 +43,7 @@ class AddrSpace {
 					// before jumping to user code
     static bool PhyPageStatus[NumPhysPages];
     static int NumFreePages;
+    bool pageTable_is_load;
 
 };
 
