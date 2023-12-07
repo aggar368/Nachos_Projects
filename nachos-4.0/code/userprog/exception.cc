@@ -151,7 +151,7 @@ ExceptionHandler(ExceptionType which)
 				kernel->machine->pageTable[vpn].physicalPage = victim_page_idx;
 				kernel->machine->phys_pages[victim_page_idx] = &(kernel->machine->pageTable[vpn]);
 			}
-			break;
+			return;
 		}
 	default:
 	    cerr << "Unexpected user mode exception" << which << "\n";
