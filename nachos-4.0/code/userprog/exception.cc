@@ -91,69 +91,71 @@ ExceptionHandler(ExceptionType which)
 	    }
 	    break;
 	case PageFaultException:		
-		kernel->stats->numPageFaults++;  // record page fault
-		unsigned int vpn = (unsigned) kernel->machine->ReadRegister(BadVAddrReg) / PageSize;  // load the page # failed to find
-		// see if there is spare physical page
-		unsigned int phy_mem_idx = 0;
-		while (kernel->machine->PhyMemStatus[phy_mem_idx] == true && phy_mem_idx < NumPhysPages)
 		{
-			phy_mem_idx++;
-		}
-
-		if (phy_mem_idx < NumPhysPages)  // there is available physical page
-		{
-			char *read_disk_buffer;
-			read_disk_buffer = new char[PageSize];
-			kernel->machine->PhyMemStatus[phy_mem_idx] = true;
-			kernel->machine->phys_pages[phy_mem_idx] = &(kernel->machine->pageTable[vpn]);
-			kernel->machine->pageTable[vpn].valid = true;
-			kernel->machine->pageTable[vpn].physicalPage = phy_mem_idx;
-			kernel->machine->pageTable[vpn].access_times++;  // record calling of the page
-			// load the page in
-			kernel->secondMem->ReadSector(kernel->machine->pageTable[vpn].virtualPage, read_disk_buffer);
-			bcopy(read_disk_buffer, &(kernel->machine->mainMemory[phy_mem_idx*PageSize]), PageSize);
-		}
-		else  // select a physical page to swap
-		{			
-			// find the least used physical page
-			unsigned int min_usage = kernel->machine->phys_pages[0]->access_times;
-			int victim_page_idx = 0;
-			for (int i = 1; i < NumPhysPages; i++)
+			kernel->stats->numPageFaults++;  // record page fault
+			unsigned int vpn = (unsigned) kernel->machine->ReadRegister(BadVAddrReg) / PageSize;  // load the page # failed to find
+			// see if there is spare physical page
+			unsigned int phy_mem_idx = 0;
+			while (kernel->machine->PhyMemStatus[phy_mem_idx] == true && phy_mem_idx < NumPhysPages)
 			{
-				if (kernel->machine->phys_pages[i]->access_times < min_usage)
-				{
-					min_usage = kernel->machine->phys_pages[i]->access_times;
-					victim_page_idx = i;
-				}				
+				phy_mem_idx++;
 			}
-			kernel->machine->phys_pages[victim_page_idx]->access_times = 1;  // zero original value + access once
 
-			char *read_disk_buffer;
-			char *read_mem_buffer;
-			read_disk_buffer = new char[PageSize];
-			read_mem_buffer = new char[PageSize];
-			// read old page from memory
-			bcopy(&(kernel->machine->mainMemory[victim_page_idx*PageSize]), read_mem_buffer, PageSize);
-			// read new page from disk
-			kernel->secondMem->ReadSector(kernel->machine->pageTable[vpn].virtualPage, read_disk_buffer);
-			// write new page into memory
-			bcopy(read_disk_buffer, &(kernel->machine->mainMemory[victim_page_idx*PageSize]), PageSize);
-			// write old page into disk
-			kernel->secondMem->WriteSector(kernel->machine->pageTable[vpn].virtualPage, read_mem_buffer);
+			if (phy_mem_idx < NumPhysPages)  // there is available physical page
+			{
+				char *read_disk_buffer;
+				read_disk_buffer = new char[PageSize];
+				kernel->machine->PhyMemStatus[phy_mem_idx] = true;
+				kernel->machine->phys_pages[phy_mem_idx] = &(kernel->machine->pageTable[vpn]);
+				kernel->machine->pageTable[vpn].valid = true;
+				kernel->machine->pageTable[vpn].physicalPage = phy_mem_idx;
+				kernel->machine->pageTable[vpn].access_times++;  // record calling of the page
+				// load the page in
+				kernel->secondMem->ReadSector(kernel->machine->pageTable[vpn].virtualPage, read_disk_buffer);
+				bcopy(read_disk_buffer, &(kernel->machine->mainMemory[phy_mem_idx*PageSize]), PageSize);
+			}
+			else  // select a physical page to swap
+			{			
+				// find the least used physical page
+				unsigned int min_usage = kernel->machine->phys_pages[0]->access_times;
+				int victim_page_idx = 0;
+				for (int i = 1; i < NumPhysPages; i++)
+				{
+					if (kernel->machine->phys_pages[i]->access_times < min_usage)
+					{
+						min_usage = kernel->machine->phys_pages[i]->access_times;
+						victim_page_idx = i;
+					}				
+				}
+				kernel->machine->phys_pages[victim_page_idx]->access_times = 1;  // zero original value + access once
 
-			// update info of swapped page
-			kernel->machine->phys_pages[victim_page_idx]->virtualPage = kernel->machine->pageTable[vpn].virtualPage;
-			kernel->machine->phys_pages[victim_page_idx]->valid = false;
+				char *read_disk_buffer;
+				char *read_mem_buffer;
+				read_disk_buffer = new char[PageSize];
+				read_mem_buffer = new char[PageSize];
+				// read old page from memory
+				bcopy(&(kernel->machine->mainMemory[victim_page_idx*PageSize]), read_mem_buffer, PageSize);
+				// read new page from disk
+				kernel->secondMem->ReadSector(kernel->machine->pageTable[vpn].virtualPage, read_disk_buffer);
+				// write new page into memory
+				bcopy(read_disk_buffer, &(kernel->machine->mainMemory[victim_page_idx*PageSize]), PageSize);
+				// write old page into disk
+				kernel->secondMem->WriteSector(kernel->machine->pageTable[vpn].virtualPage, read_mem_buffer);
 
-			//update info of loaded page
-			kernel->machine->pageTable[vpn].valid = true;
-			kernel->machine->pageTable[vpn].physicalPage = victim_page_idx;
-			kernel->machine->phys_pages[victim_page_idx] = &(kernel->machine->pageTable[vpn]);
+				// update info of swapped page
+				kernel->machine->phys_pages[victim_page_idx]->virtualPage = kernel->machine->pageTable[vpn].virtualPage;
+				kernel->machine->phys_pages[victim_page_idx]->valid = false;
+
+				//update info of loaded page
+				kernel->machine->pageTable[vpn].valid = true;
+				kernel->machine->pageTable[vpn].physicalPage = victim_page_idx;
+				kernel->machine->phys_pages[victim_page_idx] = &(kernel->machine->pageTable[vpn]);
+			}
+			break;
 		}
-		break;
 	default:
 	    cerr << "Unexpected user mode exception" << which << "\n";
 	    break;
-    }
+    }	
     ASSERTNOTREACHED();
 }
