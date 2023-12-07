@@ -109,25 +109,33 @@ ExceptionHandler(ExceptionType which)
 				kernel->machine->phys_pages[phy_mem_idx] = &(kernel->machine->pageTable[vpn]);
 				kernel->machine->pageTable[vpn].valid = true;
 				kernel->machine->pageTable[vpn].physicalPage = phy_mem_idx;
-				kernel->machine->pageTable[vpn].access_times++;  // record calling of the page
+				kernel->machine->pageTable[vpn].out_order = NumPhysPages;  // initial order in memory
 				// load the page in
 				kernel->secondMem->ReadSector(kernel->machine->pageTable[vpn].virtualPage, read_disk_buffer);
 				bcopy(read_disk_buffer, &(kernel->machine->mainMemory[phy_mem_idx*PageSize]), PageSize);
 			}
 			else  // select a physical page to swap
 			{			
+				// update FIFO order
+				for (int i = 0; i < NumPhysPages; i++)
+				{
+					if (kernel->machine->phys_pages[i]->out_order > 0)
+					{
+						kernel->machine->phys_pages[i]->out_order--;
+					}					
+				}				
+				
 				// find the least used physical page
-				unsigned int min_usage = kernel->machine->phys_pages[0]->access_times;
+				unsigned int first_order = kernel->machine->phys_pages[0]->out_order;
 				int victim_page_idx = 0;
 				for (int i = 1; i < NumPhysPages; i++)
 				{
-					if (kernel->machine->phys_pages[i]->access_times < min_usage)
+					if (kernel->machine->phys_pages[i]->out_order < first_order)
 					{
-						min_usage = kernel->machine->phys_pages[i]->access_times;
+						first_order = kernel->machine->phys_pages[i]->out_order;
 						victim_page_idx = i;
 					}				
-				}
-				kernel->machine->phys_pages[victim_page_idx]->access_times = 1;  // zero original value + access once
+				}				
 
 				char *read_disk_buffer;
 				char *read_mem_buffer;
@@ -150,6 +158,7 @@ ExceptionHandler(ExceptionType which)
 				kernel->machine->pageTable[vpn].valid = true;
 				kernel->machine->pageTable[vpn].physicalPage = victim_page_idx;
 				kernel->machine->phys_pages[victim_page_idx] = &(kernel->machine->pageTable[vpn]);
+				kernel->machine->pageTable[vpn].out_order = NumPhysPages;  // initial order in memory
 			}
 			return;
 		}

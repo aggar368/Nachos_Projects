@@ -180,6 +180,7 @@ AddrSpace::Load(char *fileName)
                 pageTable[i].use = false;
                 pageTable[i].dirty = false;
                 pageTable[i].readOnly = false;
+                pageTable[i].out_order = NumPhysPages;  // initial order in memory
                 executable->ReadAt(&(kernel->machine->mainMemory[phy_mem_idx*PageSize]), PageSize, noffH.code.inFileAddr+(i*PageSize));
             }
             else  // no spare physical memory -> use virtual memory (swap disk)
