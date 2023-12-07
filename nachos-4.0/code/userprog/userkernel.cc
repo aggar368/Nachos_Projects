@@ -62,6 +62,7 @@ UserProgKernel::Initialize(SchedulerType type)
 
     machine = new Machine(debugUserProg);
     fileSystem = new FileSystem();
+	secondMem = new SynchDisk("Secondary Memory");
 #ifdef FILESYS
     synchDisk = new SynchDisk("New SynchDisk");
 #endif // FILESYS

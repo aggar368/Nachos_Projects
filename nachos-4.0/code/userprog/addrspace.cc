@@ -22,8 +22,8 @@
 #include "noff.h"
 #define PAGE_OCCU true
 #define PAGE_FREE false
-bool AddrSpace::PhyPageStatus[NumPhysPages] = {PAGE_FREE};
-int AddrSpace::NumFreePages = NumPhysPages;
+// bool AddrSpace::PhyPageStatus[NumPhysPages] = {PAGE_FREE};
+// int AddrSpace::NumFreePages = NumPhysPages;
 
 //----------------------------------------------------------------------
 // SwapHeader
@@ -82,11 +82,13 @@ AddrSpace::AddrSpace()
 
 AddrSpace::~AddrSpace()
 {
+   /*
    for (int i = 0; i < numPages; i++)
    {
         AddrSpace::PhyPageStatus[pageTable[i].physicalPage] = PAGE_FREE;
         AddrSpace::NumFreePages++;
    }
+   */
    
    delete pageTable;
 }
@@ -108,6 +110,7 @@ AddrSpace::Load(char *fileName)
     OpenFile *executable = kernel->fileSystem->Open(fileName);
     NoffHeader noffH;
     unsigned int size;
+    unsigned int swap_disk_idx;
 
     if (executable == NULL) {
 	cerr << "Unable to open file " << fileName << "\n";
@@ -127,11 +130,12 @@ AddrSpace::Load(char *fileName)
 //	cout << "number of pages of " << fileName<< " is "<<numPages<<endl;
     size = numPages * PageSize;
 
-    ASSERT(numPages <= NumFreePages);		// check we're not trying
-						// to run anything too big --
-						// at least until we have
-						// virtual memory
+    // ASSERT(numPages <= NumFreePages);		// check we're not trying
+                                                // to run anything too big --
+                                                // at least until we have
+                                                // virtual memory (we have now)
     pageTable = new TranslationEntry[numPages];
+    /*
     for (unsigned int i = 0, idx = 0; i < numPages; i++)
     {
         pageTable[i].virtualPage = i;
@@ -149,23 +153,61 @@ AddrSpace::Load(char *fileName)
         pageTable[i].readOnly = false;
         
     }
-    
+    */
 
     DEBUG(dbgAddr, "Initializing address space: " << numPages << ", " << size);
 
 // then, copy in the code and data segments into memory
 	if (noffH.code.size > 0) {
         DEBUG(dbgAddr, "Initializing code segment.");
-	DEBUG(dbgAddr, noffH.code.virtualAddr << ", " << noffH.code.size);
-        	executable->ReadAt(
-		&(kernel->machine->mainMemory[pageTable[noffH.code.virtualAddr/PageSize].physicalPage * PageSize + (noffH.code.virtualAddr%PageSize)]), 
-			noffH.code.size, noffH.code.inFileAddr);
+	    DEBUG(dbgAddr, noffH.code.virtualAddr << ", " << noffH.code.size);
+        for (unsigned int i = 0; i < numPages; i++)
+        {
+            // load i-th page
+            // see how many physical pages are used
+            unsigned int phy_mem_idx = 0;
+            while (kernel->machine->PhyMemStatus[phy_mem_idx] == true && phy_mem_idx < NumPhysPages)
+            {
+                phy_mem_idx++;
+            }
+            
+            if (phy_mem_idx < NumPhysPages)  // there is available physical memory page
+            {
+                kernel->machine->PhyMemStatus[phy_mem_idx] = true;
+                kernel->machine->phys_pages[phy_mem_idx] = &pageTable[i];
+                pageTable[i].physicalPage = phy_mem_idx;
+                pageTable[i].valid = true;
+                pageTable[i].use = false;
+                pageTable[i].dirty = false;
+                pageTable[i].readOnly = false;
+                executable->ReadAt(&(kernel->machine->mainMemory[phy_mem_idx*PageSize]), PageSize, noffH.code.inFileAddr+(i*PageSize));
+            }
+            else  // no spare physical memory -> use virtual memory (swap disk)
+            {
+                char *read_file_buffer;
+                read_file_buffer = new char[PageSize];
+                // see how many swap disk pages are used
+                swap_disk_idx = 0;
+                while (kernel->machine->VirMemStatus[swap_disk_idx] == true)
+                {
+                    swap_disk_idx++;
+                }
+                kernel->machine->VirMemStatus[swap_disk_idx] = true;
+                pageTable[i].virtualPage = swap_disk_idx;
+                pageTable[i].valid = false;  // valid bit off
+                pageTable[i].use = false;
+                pageTable[i].dirty = false;
+                pageTable[i].readOnly = false;
+                executable->ReadAt(read_file_buffer, PageSize, noffH.code.inFileAddr+(i*PageSize));
+                kernel->secondMem->WriteSector(swap_disk_idx, read_file_buffer);
+            }                                    
+        }                
     }
 	if (noffH.initData.size > 0) {
         DEBUG(dbgAddr, "Initializing data segment.");
-	DEBUG(dbgAddr, noffH.initData.virtualAddr << ", " << noffH.initData.size);
+	    DEBUG(dbgAddr, noffH.initData.virtualAddr << ", " << noffH.initData.size);
         executable->ReadAt(
-		&(kernel->machine->mainMemory[pageTable[noffH.initData.virtualAddr/PageSize].physicalPage * PageSize + (noffH.initData.virtualAddr%PageSize)]),
+		&(kernel->machine->mainMemory[noffH.initData.virtualAddr]),
 			noffH.initData.size, noffH.initData.inFileAddr);
     }
 
