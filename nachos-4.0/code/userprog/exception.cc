@@ -97,7 +97,7 @@ ExceptionHandler(ExceptionType which)
 			vpn = (unsigned) kernel->machine->ReadRegister(BadVAddrReg) / PageSize;  // load the page # failed to find
 			// see if there is spare physical page
 			unsigned int phy_mem_idx = 0;
-			while (kernel->machine->PhyMemStatus[phy_mem_idx] == true && phy_mem_idx < NumPhysPages)
+			while (kernel->PhyMemStatus[phy_mem_idx] == true && phy_mem_idx < NumPhysPages)
 			{
 				phy_mem_idx++;
 			}
@@ -106,11 +106,11 @@ ExceptionHandler(ExceptionType which)
 			{
 				char *read_disk_buffer;
 				read_disk_buffer = new char[PageSize];
-				kernel->machine->PhyMemStatus[phy_mem_idx] = true;
-				kernel->machine->phys_pages[phy_mem_idx] = &(kernel->machine->pageTable[vpn]);
+				kernel->PhyMemStatus[phy_mem_idx] = true;
+				kernel->phys_pages[phy_mem_idx] = &(kernel->machine->pageTable[vpn]);
 				kernel->machine->pageTable[vpn].valid = true;
 				kernel->machine->pageTable[vpn].physicalPage = phy_mem_idx;
-				kernel->machine->pageTable[vpn].out_order = NumPhysPages;  // initial order in memory
+				kernel->page_out_order[phy_mem_idx] = NumPhysPages;  // initial order in memory				
 				// load the page in
 				kernel->secondMem->ReadSector(kernel->machine->pageTable[vpn].virtualPage, read_disk_buffer);
 				bcopy(read_disk_buffer, &(kernel->machine->mainMemory[phy_mem_idx*PageSize]), PageSize);
@@ -120,20 +120,20 @@ ExceptionHandler(ExceptionType which)
 				// update FIFO order
 				for (int i = 0; i < NumPhysPages; i++)
 				{
-					if (kernel->machine->phys_pages[i]->out_order > 0)
+					if (kernel->page_out_order[i] > 0)
 					{
-						kernel->machine->phys_pages[i]->out_order--;
+						kernel->page_out_order[i]--;
 					}					
 				}				
 				
 				// find the least used physical page
-				unsigned int first_order = kernel->machine->phys_pages[0]->out_order;
+				unsigned int first_order = kernel->page_out_order[0];
 				int victim_page_idx = 0;
 				for (int i = 1; i < NumPhysPages; i++)
 				{
-					if (kernel->machine->phys_pages[i]->out_order < first_order)
+					if (kernel->page_out_order[i] < first_order)
 					{
-						first_order = kernel->machine->phys_pages[i]->out_order;
+						first_order = kernel->page_out_order[i];
 						victim_page_idx = i;
 					}				
 				}				
@@ -152,14 +152,14 @@ ExceptionHandler(ExceptionType which)
 				kernel->secondMem->WriteSector(kernel->machine->pageTable[vpn].virtualPage, read_mem_buffer);
 
 				// update info of swapped page
-				kernel->machine->phys_pages[victim_page_idx]->virtualPage = kernel->machine->pageTable[vpn].virtualPage;
-				kernel->machine->phys_pages[victim_page_idx]->valid = false;
+				kernel->phys_pages[victim_page_idx]->virtualPage = kernel->machine->pageTable[vpn].virtualPage;
+				kernel->phys_pages[victim_page_idx]->valid = false;
 
 				//update info of loaded page
 				kernel->machine->pageTable[vpn].valid = true;
 				kernel->machine->pageTable[vpn].physicalPage = victim_page_idx;
-				kernel->machine->phys_pages[victim_page_idx] = &(kernel->machine->pageTable[vpn]);
-				kernel->machine->pageTable[vpn].out_order = NumPhysPages;  // initial order in memory
+				kernel->phys_pages[victim_page_idx] = &(kernel->machine->pageTable[vpn]);
+				kernel->page_out_order[victim_page_idx] = NumPhysPages;  // initial order in memory				
 			}
 			return;
 		}

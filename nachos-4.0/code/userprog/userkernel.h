@@ -34,7 +34,10 @@ class UserProgKernel : public ThreadedKernel {
     Machine *machine;
     FileSystem *fileSystem;
     SynchDisk *secondMem;
-
+    bool PhyMemStatus[NumPhysPages] = {false};
+	  bool VirMemStatus[2*NumPhysPages] = {false};
+    TranslationEntry *phys_pages[NumPhysPages];
+    unsigned int page_out_order[NumPhysPages];
 #ifdef FILESYS
     SynchDisk *synchDisk;
 #endif // FILESYS

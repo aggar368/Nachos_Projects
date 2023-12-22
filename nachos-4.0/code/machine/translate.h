@@ -31,8 +31,7 @@ class TranslationEntry {
   public:
     unsigned int virtualPage;  	// The page number in virtual memory.
     unsigned int physicalPage;  // The page number in real memory (relative to the
-                                //  start of "mainMemory")
-    int out_order;
+                                //  start of "mainMemory")    
     bool valid;         // If this bit is set, the translation is ignored.
 			// (In other words, the entry hasn't been initialized.)
     bool readOnly;	// If this bit is set, the user program is not allowed

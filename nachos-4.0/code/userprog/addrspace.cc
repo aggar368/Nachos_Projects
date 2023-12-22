@@ -166,21 +166,21 @@ AddrSpace::Load(char *fileName)
             // load i-th page
             // see how many physical pages are used
             unsigned int phy_mem_idx = 0;
-            while (kernel->machine->PhyMemStatus[phy_mem_idx] == true && phy_mem_idx < NumPhysPages)
+            while (kernel->PhyMemStatus[phy_mem_idx] == true && phy_mem_idx < NumPhysPages)
             {
                 phy_mem_idx++;
             }
             
             if (phy_mem_idx < NumPhysPages)  // there is available physical memory page
             {
-                kernel->machine->PhyMemStatus[phy_mem_idx] = true;
-                kernel->machine->phys_pages[phy_mem_idx] = &pageTable[i];
+                kernel->PhyMemStatus[phy_mem_idx] = true;
+                kernel->phys_pages[phy_mem_idx] = &pageTable[i];
                 pageTable[i].physicalPage = phy_mem_idx;
                 pageTable[i].valid = true;
                 pageTable[i].use = false;
                 pageTable[i].dirty = false;
                 pageTable[i].readOnly = false;
-                pageTable[i].out_order = NumPhysPages;  // initial order in memory
+                kernel->page_out_order[phy_mem_idx] = NumPhysPages;  // initial order in memory                
                 executable->ReadAt(&(kernel->machine->mainMemory[phy_mem_idx*PageSize]), PageSize, noffH.code.inFileAddr+(i*PageSize));
             }
             else  // no spare physical memory -> use virtual memory (swap disk)
@@ -189,11 +189,11 @@ AddrSpace::Load(char *fileName)
                 read_file_buffer = new char[PageSize];
                 // see how many swap disk pages are used
                 swap_disk_idx = 0;
-                while (kernel->machine->VirMemStatus[swap_disk_idx] == true)
+                while (kernel->VirMemStatus[swap_disk_idx] == true)
                 {
                     swap_disk_idx++;
                 }
-                kernel->machine->VirMemStatus[swap_disk_idx] = true;
+                kernel->VirMemStatus[swap_disk_idx] = true;
                 pageTable[i].virtualPage = swap_disk_idx;
                 pageTable[i].valid = false;  // valid bit off
                 pageTable[i].use = false;
